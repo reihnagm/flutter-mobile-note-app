@@ -32,8 +32,9 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
 
   Future<List<Map<String, dynamic>>> fetchAndSetNotes() async {       
     notes = [];
-    final dataList = await DBHelper.getData("user_notes");
+    final dataList = await DBHelper.getData("notes");
     notes.addAll(dataList);
+    return notes;
   }
 
   @override
@@ -180,14 +181,19 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
     }
 
     void submitNote() {
+      String userNotesId = Uuid().v4();
       for (var note in notesWidget) {
         TextField titleParent = note["title"];
         for (var noteDesc in note["description"]) {
           TextField titleChild = noteDesc["title"];
-          DBHelper.insert("user_notes", {
-            "id": Uuid().v4(),
+          DBHelper.insert("notes", {
+            "id": userNotesId,
             "title": titleParent.controller.text,
-            "desc": "testing desc"
+          });
+          DBHelper.insert("descs", {
+            "id": Uuid().v4(),
+            "title": titleChild.controller.text,
+            "note_id": userNotesId
           });
         }
       }
@@ -382,12 +388,12 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                   fontSize: 16.0
                                 ),
                               ),
-                              SizedBox(height: 8.0),
-                              Text(e["desc"],
-                                style: TextStyle(
-                                  fontSize: 13.0
-                                ),
-                              )
+                              // SizedBox(height: 8.0),
+                              // Text(e["desc"],
+                              //   style: TextStyle(
+                              //     fontSize: 13.0
+                              //   ),
+                              // )
                             ],
                           ),
                         ),
@@ -395,8 +401,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                           child: InkWell(
                             onTap: () {
                               notes.removeWhere((item) => item["id"] == e["id"]);
-                              setState(() {   });                             
-                              DBHelper.delete("user_notes", e["id"]);
+                              setState(() { });                             
+                              DBHelper.delete("notes", e["id"]);
                             },
                             child: Icon(
                               Icons.remove_circle,
