@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'package:uuid/uuid.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+
 import 'package:note_app/helpers/db_helper.dart';
 
 void main() {
@@ -36,6 +38,9 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
     for (var item in dataList) {
       List descs = item["childTitle"].toString().split(',');
       notes.add({
+        "note_id": item["note_id"],
+        "desc_id": item["desc_id"],
+        "note_desc_id": item["note_desc_id"],
         "title": item["parentTitle"],
         "descs": descs
       });
@@ -370,78 +375,229 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
             );
           return StatefulBuilder(
             builder: (BuildContext context, Function s) {
-              return ListView(
-                children: notes.asMap().map((i, e) => 
-                 MapEntry(i, Container(
-                    margin: EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: Column(
-                            children: [
-                              Text("${(i + 1).toString()}.",
+              return Container(
+                margin: EdgeInsets.only(top: 20.0, left: 16.0, right: 16.0),
+                child: StaggeredGridView.countBuilder(
+                  crossAxisCount: 4,
+                  itemCount: notes.length,
+                  itemBuilder: (BuildContext context, int i) => Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 2,
+                        blurRadius: 20,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 4,
+                              child: Text(notes[i]["title"]),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: InkWell(
+                                onTap: () {
+                                                              
+                                 
+                                },
+                                child: Icon(
+                                  Icons.edit,
+                                  size: 18.0,
+                                  color: Colors.blue[200],
+                                ),
+                              )
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: InkWell(
+                                onTap: () {
+                                  showGeneralDialog(
+                                    barrierColor: Colors.black.withOpacity(0.5),
+                                    transitionBuilder: (BuildContext context, Animation<double> a1, Animation<double> a2, Widget widget) {
+                                      final curvedValue = Curves.easeInOutBack.transform(a1.value) -   1.0;
+                                      return StatefulBuilder(
+                                        builder: (BuildContext context, Function s) {
+                                          return Transform(
+                                          transform: Matrix4.translationValues(0.0, curvedValue * 200, 0.0),
+                                          child: Opacity(
+                                            opacity: a1.value,
+                                            child: AlertDialog(
+                                              shape: OutlineInputBorder(
+                                                borderSide: BorderSide.none,
+                                                borderRadius: BorderRadius.circular(10.0)
+                                              ),
+                                              title: Text('Delete note ?',
+                                                style: TextStyle(
+                                                  fontSize: 16.0
+                                                ),
+                                              ),
+                                              content: Container(
+                                              width: 300.0,
+                                              height: 40.0,
+                                              child: ListView(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.end,
+                                                    children: [
+                                                      InkWell(
+                                                        onTap: () {
+                                                          Navigator.of(context).pop();
+                                                        },
+                                                        child: Text("No",
+                                                          style: TextStyle(
+                                                            fontSize: 13.0,
+                                                            color: Colors.black
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 16.0),
+                                                      InkWell(
+                                                        onTap: () {
+                                                          setState(() { });                             
+                                                          DBHelper.delete("notes", notes[i]["note_id"]);
+                                                          DBHelper.delete("descs", notes[i]["desc_id"]);
+                                                          DBHelper.delete("note_descs", notes[i]["note_desc_id"]);
+                                                          Navigator.of(context).pop();
+                                                        },
+                                                        child: Text("Yes",
+                                                          style: TextStyle(
+                                                            fontSize: 13.0,
+                                                            color: Colors.black
+                                                          ),
+                                                        ),
+                                                      )
+                                                    ],
+                                                  )
+                                                ],
+                                              )
+                                            )),
+                                          ));
+                                        },
+                                      );
+                                    },
+                                    transitionDuration: Duration(milliseconds: 200),
+                                    barrierDismissible: true,
+                                    barrierLabel: '',
+                                    context: context,
+                                    pageBuilder: (context, animation1, animation2) {}
+                                  );
+                                },
+                                child: Icon(
+                                  Icons.remove_circle,
+                                  size: 18.0,
+                                  color: Colors.red[200],
+                                ),
+                              )
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: notes[i]["descs"].length,
+                          itemBuilder: (BuildContext context, int z) {
+                            return Container(
+                              margin: EdgeInsets.only(left: 8.0, bottom: 5.0),
+                              child: Text("${notes[i]["descs"][z].toString()}",
                                 style: TextStyle(
                                   fontSize: 13.0
                                 ),
                               )
-                            ],
-                          ),
+                            );
+                          },
                         ),
-                        Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(e["title"],
-                                style: TextStyle(
-                                  fontSize: 16.0
-                                ),
-                              ),
-                              SizedBox(height: 6.0),
-                              ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: e["descs"].length,
-                                itemBuilder: (BuildContext context, int i) {
-                                  return Container(
-                                    margin: EdgeInsets.only(left: 8.0, bottom: 5.0),
-                                    child: Text("- ${e["descs"][i].toString()}",
-                                      style: TextStyle(
-                                        fontSize: 13.0
-                                      ),
-                                    )
-                                  );
-                                },
-                              ),
+                      ),
+                    ]
+                  )),
+                  staggeredTileBuilder: (int index) => StaggeredTile.count(2, index.isEven ? 2 : 1),
+                  mainAxisSpacing: 6.0,
+                  crossAxisSpacing: 6.0,
+                ),
+              );
+              
+              // ListView(
+              //   children: notes.asMap().map((i, e) => 
+              //    MapEntry(i, Container(
+              //       margin: EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+              //       child: Row(
+              //         mainAxisAlignment: MainAxisAlignment.start,
+              //         children: [
+              //           Expanded(
+              //             flex: 1,
+              //             child: Column(
+              //               children: [
+              //                 Text("${(i + 1).toString()}.",
+              //                   style: TextStyle(
+              //                     fontSize: 13.0
+              //                   ),
+              //                 )
+              //               ],
+              //             ),
+              //           ),
+              //           Expanded(
+              //             flex: 3,
+              //             child: Column(
+              //               crossAxisAlignment: CrossAxisAlignment.start,
+              //               children: [
+              //                 Text(e["title"],
+              //                   style: TextStyle(
+              //                     fontSize: 16.0
+              //                   ),
+              //                 ),
+              //                 SizedBox(height: 6.0),
+              //                 ListView.builder(
+              //                   shrinkWrap: true,
+              //                   itemCount: e["descs"].length,
+              //                   itemBuilder: (BuildContext context, int i) {
+              //                     return Container(
+              //                       margin: EdgeInsets.only(left: 8.0, bottom: 5.0),
+              //                       child: Text("- ${e["descs"][i].toString()}",
+              //                         style: TextStyle(
+              //                           fontSize: 13.0
+              //                         ),
+              //                       )
+              //                     );
+              //                   },
+              //                 ),
                              
                               
-                              // SizedBox(height: 8.0),
-                              // Text(e["desc"],
-                              //   style: TextStyle(
-                              //     fontSize: 13.0
-                              //   ),
-                              // )
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              notes.removeWhere((item) => item["id"] == e["id"]);
-                              setState(() { });                             
-                              DBHelper.delete("notes", e["id"]);
-                            },
-                            child: Icon(
-                              Icons.remove_circle,
-                              color: Colors.red[200],
-                            ),
-                          )
-                        )
-                      ],
-                    ),
-                  )
-                )).values.toList());
+              //                 // SizedBox(height: 8.0),
+              //                 // Text(e["desc"],
+              //                 //   style: TextStyle(
+              //                 //     fontSize: 13.0
+              //                 //   ),
+              //                 // )
+              //               ],
+              //             ),
+              //           ),
+              //           Expanded(
+              //             child: InkWell(
+              //               onTap: () {
+              //                 notes.removeWhere((item) => item["id"] == e["id"]);
+              //                 setState(() { });                             
+              //                 DBHelper.delete("notes", e["id"]);
+              //               },
+              //               child: Icon(
+              //                 Icons.remove_circle,
+              //                 color: Colors.red[200],
+              //               ),
+              //             )
+              //           )
+              //         ],
+              //       ),
+              //     )
+              //   )).values.toList());
             
               // return ListView.separated(
               //   separatorBuilder: (BuildContext context, int i) => Divider(), 

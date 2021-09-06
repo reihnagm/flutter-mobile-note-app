@@ -28,6 +28,6 @@ class DBHelper {
     final db = await DBHelper.database();
     // SELECT a.id, a.title, GROUP_CONCAT(b.title) as childs FROM notes a LEFT JOIN descs b ON a.id = b.note_id GROUP BY a.id
 
-    return db.rawQuery("SELECT GROUP_CONCAT(DISTINCT a.title) parentTitle, GROUP_CONCAT(DISTINCT c.title) childTitle FROM notes a LEFT JOIN note_descs b ON a.id = b.note_id LEFT JOIN descs c ON c.id = b.desc_id GROUP BY a.id");
+    return db.rawQuery("SELECT a.id note_id, b.id note_desc_id, c.id desc_id, GROUP_CONCAT(DISTINCT a.title) parentTitle, GROUP_CONCAT(DISTINCT c.title) childTitle FROM notes a LEFT JOIN note_descs b ON a.id = b.note_id LEFT JOIN descs c ON c.id = b.desc_id GROUP BY a.id");
   }
 }
