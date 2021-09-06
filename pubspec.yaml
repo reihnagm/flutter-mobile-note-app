@@ -13,7 +13,12 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.2
+  
+  # S
   sqflite: ^2.0.0+4
+
+  # U
+  uuid: ^3.0.4
 
 dev_dependencies:
   flutter_test:

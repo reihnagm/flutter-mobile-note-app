@@ -6,7 +6,7 @@ class DBHelper {
   static Future<Database> database() async {
     final dbPath = await sql.getDatabasesPath();
     return await sql.openDatabase(path.join(dbPath, 'notes.db'), onCreate: (db, version) {
-      return db.execute("CREATE TABLE user_notes(id TEXT PRIMARY KEY, title TEXT, desc TEXT, image TEXT)");
+      return db.execute("CREATE TABLE notes(id TEXT PRIMARY KEY, title TEXT, desc TEXT)");
     }, version: 1);
   }
 
@@ -19,6 +19,4 @@ class DBHelper {
     final db = await DBHelper.database();
     return db.query(table);
   }
-
-
 }

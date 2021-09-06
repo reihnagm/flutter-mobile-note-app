@@ -35,6 +35,3 @@ class Description {
     image: json["image"] == null ? null : json["image"],
   );
 }
-
-
-
