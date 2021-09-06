@@ -1,4 +1,4 @@
-package com.example.note_app
+package com.ragam.note
 
 import io.flutter.embedding.android.FlutterActivity
 

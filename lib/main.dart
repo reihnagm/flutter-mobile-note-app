@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:splashscreen/splashscreen.dart';
 
 import 'package:uuid/uuid.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -15,9 +16,27 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Note App',
+      title: 'Alba Note',
       debugShowCheckedModeBanner: false,
-      home: MyHomeScreen(),
+      home: SplashScreen(
+        seconds: 3,
+        navigateAfterSeconds: MyHomeScreen(),
+        title: Text('Alba Note',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 25.0,
+          color: Colors.white
+        )),
+        image: Image.asset("assets/images/notepad.png",
+          color: Colors.white,
+        ),
+        useLoader: false,
+        backgroundColor: Colors.purple[200],
+        styleTextUnderTheLoader: TextStyle(),
+        photoSize: 100.0,
+        onClick: () => print("..."),
+        loaderColor: Colors.red
+      ),
     );
   }
 }
@@ -30,18 +49,21 @@ class MyHomeScreen extends StatefulWidget {
 
 class _MyHomeScreenState extends State<MyHomeScreen> {
 
+  List trashed = [];
   List<Map<String, dynamic>> notes = [];
 
   Future<List<Map<String, dynamic>>> fetchAndSetNotes() async {       
     notes = [];
     final dataList = await DBHelper.getData();
     for (var item in dataList) {
+      List descId = item["childId"].toString().split(',');
       List descs = item["childTitle"].toString().split(',');
       notes.add({
         "note_id": item["note_id"],
         "desc_id": item["desc_id"],
         "note_desc_id": item["note_desc_id"],
         "title": item["parentTitle"],
+        "descIds": descId,
         "descs": descs
       });
     }
@@ -188,6 +210,9 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
       s(() {
         int indexParent = notesWidget.indexWhere((item) => item["id"] == idParent);
         int indexChild = notesWidget[indexParent]["description"].indexWhere((item) => item["id"] == idChild);
+        trashed.add({
+          "descIds":  notesWidget[indexParent]["description"][indexChild]["id"]
+        });
         notesWidget[indexParent]["description"].removeAt(indexChild);
       });
     }
@@ -219,6 +244,12 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
     }
 
     void updateNote() {
+      if(trashed.isNotEmpty) {
+        for (var item in trashed) {
+          DBHelper.delete("descs", item["descIds"]); 
+          DBHelper.delete("note_descs", item["descIds"]);
+        }
+      }
       for (var note in notesWidget) {
         TextField titleParent = note["title"];
         for (var noteDesc in note["description"]) {
@@ -378,53 +409,55 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
     void editNote(String noteId, String descId) {
       final notesSelected = notes.where((item) => item["note_id"] == noteId).toList();
       for (var note in notesSelected) {   
-        for (var desc in note["descs"]) {
-          notesWidget = [{
-            "id": noteId,
+        List descAssign = [];
+        for (int i = 0; i < note["descs"].length; i++) {
+          descAssign.add({
+            "id": note["descIds"][i],
             "title": TextField(
               style: TextStyle(
                 fontSize: 12.0,
                 color: Colors.black
               ),
-              controller: TextEditingController(text: note["title"]),
+              controller: TextEditingController(text: note["descs"][i]),
+              maxLines: 3,
               decoration: InputDecoration(
-                hintText: "E.g Fruits",
+                hintText: "E.g Apple",
                 hintStyle: TextStyle(
                   fontSize: 12.0,
                   color: Colors.grey
                 ),
                 contentPadding: EdgeInsets.all(16.0),
-                enabledBorder: UnderlineInputBorder(),
-                focusedBorder: UnderlineInputBorder()
+                suffixIcon: Icon(
+                  Icons.add_a_photo,
+                  color: Colors.purple[200],   
+                ),
+                enabledBorder: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder()
               ),
             ),
-            "description": [{
-              "id": descId,
-              "title": TextField(
-                style: TextStyle(
-                  fontSize: 12.0,
-                  color: Colors.black
-                ),
-                controller: TextEditingController(text: desc),
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: "E.g Apple",
-                  hintStyle: TextStyle(
-                    fontSize: 12.0,
-                    color: Colors.grey
-                  ),
-                  contentPadding: EdgeInsets.all(16.0),
-                  suffixIcon: Icon(
-                    Icons.add_a_photo,
-                    color: Colors.purple[200],   
-                  ),
-                  enabledBorder: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder()
-                ),
-              ),
-            }]
-          }]; 
+          });
         }
+        notesWidget = [{
+          "id": noteId,
+          "title": TextField(
+            style: TextStyle(
+              fontSize: 12.0,
+              color: Colors.black
+            ),
+            controller: TextEditingController(text: note["title"]),
+            decoration: InputDecoration(
+              hintText: "E.g Fruits",
+              hintStyle: TextStyle(
+                fontSize: 12.0,
+                color: Colors.grey
+              ),
+              contentPadding: EdgeInsets.all(16.0),
+              enabledBorder: UnderlineInputBorder(),
+              focusedBorder: UnderlineInputBorder()
+            ),
+          ),
+          "description": descAssign
+        }]; 
       }
       showGeneralDialog(
         barrierColor: Colors.black.withOpacity(0.5),
@@ -561,7 +594,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 2.0,
-        title: Text("Note App"),
+        title: Text("Alba Note"),
         backgroundColor: Colors.purple[200],
       ),
       body: FutureBuilder(
@@ -729,139 +762,6 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                   crossAxisSpacing: 6.0,
                 ),
               );
-              
-              // ListView(
-              //   children: notes.asMap().map((i, e) => 
-              //    MapEntry(i, Container(
-              //       margin: EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
-              //       child: Row(
-              //         mainAxisAlignment: MainAxisAlignment.start,
-              //         children: [
-              //           Expanded(
-              //             flex: 1,
-              //             child: Column(
-              //               children: [
-              //                 Text("${(i + 1).toString()}.",
-              //                   style: TextStyle(
-              //                     fontSize: 13.0
-              //                   ),
-              //                 )
-              //               ],
-              //             ),
-              //           ),
-              //           Expanded(
-              //             flex: 3,
-              //             child: Column(
-              //               crossAxisAlignment: CrossAxisAlignment.start,
-              //               children: [
-              //                 Text(e["title"],
-              //                   style: TextStyle(
-              //                     fontSize: 16.0
-              //                   ),
-              //                 ),
-              //                 SizedBox(height: 6.0),
-              //                 ListView.builder(
-              //                   shrinkWrap: true,
-              //                   itemCount: e["descs"].length,
-              //                   itemBuilder: (BuildContext context, int i) {
-              //                     return Container(
-              //                       margin: EdgeInsets.only(left: 8.0, bottom: 5.0),
-              //                       child: Text("- ${e["descs"][i].toString()}",
-              //                         style: TextStyle(
-              //                           fontSize: 13.0
-              //                         ),
-              //                       )
-              //                     );
-              //                   },
-              //                 ),
-                             
-                              
-              //                 // SizedBox(height: 8.0),
-              //                 // Text(e["desc"],
-              //                 //   style: TextStyle(
-              //                 //     fontSize: 13.0
-              //                 //   ),
-              //                 // )
-              //               ],
-              //             ),
-              //           ),
-              //           Expanded(
-              //             child: InkWell(
-              //               onTap: () {
-              //                 notes.removeWhere((item) => item["id"] == e["id"]);
-              //                 setState(() { });                             
-              //                 DBHelper.delete("notes", e["id"]);
-              //               },
-              //               child: Icon(
-              //                 Icons.remove_circle,
-              //                 color: Colors.red[200],
-              //               ),
-              //             )
-              //           )
-              //         ],
-              //       ),
-              //     )
-              //   )).values.toList());
-            
-              // return ListView.separated(
-              //   separatorBuilder: (BuildContext context, int i) => Divider(), 
-              //   itemCount: notes.length,
-              //   itemBuilder: (BuildContext context, int i) {
-              //     return Container(
-              //       margin: EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
-              //       child: Row(
-              //         mainAxisAlignment: MainAxisAlignment.start,
-              //         children: [
-              //           Expanded(
-              //             flex: 1,
-              //             child: Column(
-              //               children: [
-              //                 Text("${(i + 1).toString()}.",
-              //                   style: TextStyle(
-              //                     fontSize: 13.0
-              //                   ),
-              //                 )
-              //               ],
-              //             ),
-              //           ),
-              //           Expanded(
-              //             flex: 3,
-              //             child: Column(
-              //               crossAxisAlignment: CrossAxisAlignment.start,
-              //               children: [
-              //                 Text(notes[i]["title"],
-              //                   style: TextStyle(
-              //                     fontSize: 16.0
-              //                   ),
-              //                 ),
-              //                 SizedBox(height: 8.0),
-              //                 Text(notes[i]["desc"],
-              //                   style: TextStyle(
-              //                     fontSize: 13.0
-              //                   ),
-              //                 )
-              //               ],
-              //             ),
-              //           ),
-              //           Expanded(
-              //             child: InkWell(
-              //               onTap: () {
-              //                 s(() {  
-              //                   notes = [];
-              //                 });
-              //                 DBHelper.delete("user_notes", notes[i]["id"]);
-              //               },
-              //               child: Icon(
-              //                 Icons.remove_circle,
-              //                 color: Colors.red[200],
-              //               ),
-              //             )
-              //           )
-              //         ],
-              //       ),
-              //     );
-              //   }, 
-              // );
             },
           );
         },
