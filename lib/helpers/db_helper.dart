@@ -10,7 +10,8 @@ class DBHelper {
 
   static void _createDb(Database db) {
     db.execute("CREATE TABLE notes (id TEXT PRIMARY KEY, title TEXT)");
-    db.execute("CREATE TABLE descs (id TEXT PRIMARY KEY, title TEXT, note_id TEXT)");
+    db.execute("CREATE TABLE descs (id TEXT PRIMARY KEY, title TEXT)");
+    db.execute("CREATE TABLE note_descs (id TEXT PRIMARY KEY, note_id TEXT, desc_id TEXT)");
   }
 
   static Future<void> insert(String table, Map<String, Object> data) async {
@@ -23,8 +24,10 @@ class DBHelper {
     return db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
 
-  static Future<List<Map<String, dynamic>>> getData(String table) async {
+  static Future<List<Map<String, dynamic>>> getData() async {
     final db = await DBHelper.database();
-    return db.rawQuery("SELECT * FROM $table");
+    // SELECT a.id, a.title, GROUP_CONCAT(b.title) as childs FROM notes a LEFT JOIN descs b ON a.id = b.note_id GROUP BY a.id
+
+    return db.rawQuery("SELECT GROUP_CONCAT(DISTINCT a.title) parentTitle, GROUP_CONCAT(DISTINCT c.title) childTitle FROM notes a LEFT JOIN note_descs b ON a.id = b.note_id LEFT JOIN descs c ON c.id = b.desc_id GROUP BY a.id");
   }
 }

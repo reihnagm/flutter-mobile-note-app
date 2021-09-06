@@ -32,8 +32,14 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
 
   Future<List<Map<String, dynamic>>> fetchAndSetNotes() async {       
     notes = [];
-    final dataList = await DBHelper.getData("notes");
-    notes.addAll(dataList);
+    final dataList = await DBHelper.getData();
+    for (var item in dataList) {
+      List descs = item["childTitle"].toString().split(',');
+      notes.add({
+        "title": item["parentTitle"],
+        "descs": descs
+      });
+    }
     return notes;
   }
 
@@ -95,6 +101,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                 fontSize: 12.0,
                 color: Colors.black
               ),
+              controller: TextEditingController(),
               decoration: InputDecoration(
                 hintText: "E.g Fruits",
                 hintStyle: TextStyle(
@@ -181,19 +188,24 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
     }
 
     void submitNote() {
-      String userNotesId = Uuid().v4();
       for (var note in notesWidget) {
+        String notesId = Uuid().v4();
         TextField titleParent = note["title"];
         for (var noteDesc in note["description"]) {
+          String descsId = Uuid().v4();
           TextField titleChild = noteDesc["title"];
           DBHelper.insert("notes", {
-            "id": userNotesId,
+            "id": notesId,
             "title": titleParent.controller.text,
           });
           DBHelper.insert("descs", {
-            "id": Uuid().v4(),
+            "id": descsId,
             "title": titleChild.controller.text,
-            "note_id": userNotesId
+          });
+          DBHelper.insert("note_descs", {
+            "id": Uuid().v4(),
+            "note_id": notesId,
+            "desc_id": descsId
           });
         }
       }
@@ -255,13 +267,12 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                           itemBuilder: (BuildContext context, int i) {
                             return Column(
                               children: [
-                                notesWidget[i]["title"],
-                                if(i > 0) 
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: notesWidget[i]["title"] 
-                                      ),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: notesWidget[i]["title"] 
+                                    ),
+                                    if(i > 0) 
                                       InkWell(
                                         onTap: () => removeItem(s, notesWidget[i]["id"]),
                                         child: Icon(
@@ -269,8 +280,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                           color: Colors.purple[200]
                                         ),
                                       )
-                                    ],
-                                  ),
+                                  ],
+                                ),
                                 Container(
                                   margin: EdgeInsets.only(top: 12.0, left: 12.0, right: 12.0),
                                   child: ListView.builder(
@@ -388,6 +399,23 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                   fontSize: 16.0
                                 ),
                               ),
+                              SizedBox(height: 6.0),
+                              ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: e["descs"].length,
+                                itemBuilder: (BuildContext context, int i) {
+                                  return Container(
+                                    margin: EdgeInsets.only(left: 8.0, bottom: 5.0),
+                                    child: Text("- ${e["descs"][i].toString()}",
+                                      style: TextStyle(
+                                        fontSize: 13.0
+                                      ),
+                                    )
+                                  );
+                                },
+                              ),
+                             
+                              
                               // SizedBox(height: 8.0),
                               // Text(e["desc"],
                               //   style: TextStyle(
@@ -481,11 +509,11 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: addNotes,
         elevation: 2.0,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.purple[200],
         tooltip: 'Add a Note',
         child: Icon(
           Icons.add,
-          color: Colors.purple[200],  
+          color: Colors.white,  
         ),
       ),
     );
