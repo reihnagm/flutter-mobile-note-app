@@ -1,11 +1,9 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
 import 'package:uuid/uuid.dart';
 import 'package:note_app/helpers/db_helper.dart';
-import 'package:note_app/models/note.dart';
 
 void main() {
   runApp(MyApp());
@@ -30,13 +28,12 @@ class MyHomeScreen extends StatefulWidget {
 
 class _MyHomeScreenState extends State<MyHomeScreen> {
 
-  List<Map<String, dynamic>> _notes = [];
-  List<Map<String, dynamic>> get notes => [..._notes];
+  List<Map<String, dynamic>> notes = [];
 
   Future<List<Map<String, dynamic>>> fetchAndSetNotes() async {       
-    _notes = [];
+    notes = [];
     final dataList = await DBHelper.getData("user_notes");
-    _notes.addAll(dataList);
+    notes.addAll(dataList);
   }
 
   @override
@@ -195,11 +192,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
         }
       }
       Navigator.of(context).pop();
-      Future.delayed(Duration.zero, () {
-        setState(() {
-          fetchAndSetNotes();
-        });
-      });
+      setState(() {});
     }
 
     void addNotes() {
@@ -360,11 +353,9 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
             );
           return StatefulBuilder(
             builder: (BuildContext context, Function s) {
-              return ListView.separated(
-                separatorBuilder: (BuildContext context, int i) => Divider(), 
-                itemCount: notes.length,
-                itemBuilder: (BuildContext context, int i) {
-                  return Container(
+              return ListView(
+                children: notes.asMap().map((i, e) => 
+                 MapEntry(i, Container(
                     margin: EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -386,13 +377,13 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(notes[i]["title"],
+                              Text(e["title"],
                                 style: TextStyle(
                                   fontSize: 16.0
                                 ),
                               ),
                               SizedBox(height: 8.0),
-                              Text(notes[i]["desc"],
+                              Text(e["desc"],
                                 style: TextStyle(
                                   fontSize: 13.0
                                 ),
@@ -403,9 +394,9 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                         Expanded(
                           child: InkWell(
                             onTap: () {
-                              s(() {              
-                                _notes.removeWhere((el) => el["id"] == notes[i]["id"]);
-                              });
+                              notes.removeWhere((item) => item["id"] == e["id"]);
+                              setState(() {   });                             
+                              DBHelper.delete("user_notes", e["id"]);
                             },
                             child: Icon(
                               Icons.remove_circle,
@@ -415,9 +406,68 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                         )
                       ],
                     ),
-                  );
-                }, 
-              );
+                  )
+                )).values.toList());
+            
+              // return ListView.separated(
+              //   separatorBuilder: (BuildContext context, int i) => Divider(), 
+              //   itemCount: notes.length,
+              //   itemBuilder: (BuildContext context, int i) {
+              //     return Container(
+              //       margin: EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+              //       child: Row(
+              //         mainAxisAlignment: MainAxisAlignment.start,
+              //         children: [
+              //           Expanded(
+              //             flex: 1,
+              //             child: Column(
+              //               children: [
+              //                 Text("${(i + 1).toString()}.",
+              //                   style: TextStyle(
+              //                     fontSize: 13.0
+              //                   ),
+              //                 )
+              //               ],
+              //             ),
+              //           ),
+              //           Expanded(
+              //             flex: 3,
+              //             child: Column(
+              //               crossAxisAlignment: CrossAxisAlignment.start,
+              //               children: [
+              //                 Text(notes[i]["title"],
+              //                   style: TextStyle(
+              //                     fontSize: 16.0
+              //                   ),
+              //                 ),
+              //                 SizedBox(height: 8.0),
+              //                 Text(notes[i]["desc"],
+              //                   style: TextStyle(
+              //                     fontSize: 13.0
+              //                   ),
+              //                 )
+              //               ],
+              //             ),
+              //           ),
+              //           Expanded(
+              //             child: InkWell(
+              //               onTap: () {
+              //                 s(() {  
+              //                   notes = [];
+              //                 });
+              //                 DBHelper.delete("user_notes", notes[i]["id"]);
+              //               },
+              //               child: Icon(
+              //                 Icons.remove_circle,
+              //                 color: Colors.red[200],
+              //               ),
+              //             )
+              //           )
+              //         ],
+              //       ),
+              //     );
+              //   }, 
+              // );
             },
           );
         },
