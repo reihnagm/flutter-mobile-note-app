@@ -49,6 +49,7 @@ class MyHomeScreen extends StatefulWidget {
 
 class _MyHomeScreenState extends State<MyHomeScreen> {
 
+  ScrollController notesController = ScrollController();
   List trashed = [];
   List<Map<String, dynamic>> notes = [];
 
@@ -108,10 +109,6 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                 color: Colors.grey
               ),
               contentPadding: EdgeInsets.all(16.0),
-              suffixIcon: Icon(
-                Icons.add_a_photo,
-                color: Colors.purple[200],   
-              ),
               enabledBorder: OutlineInputBorder(),
               focusedBorder: OutlineInputBorder()
             ),
@@ -156,16 +153,15 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                     color: Colors.grey
                   ),
                   contentPadding: EdgeInsets.all(16.0),
-                  suffixIcon: Icon(
-                    Icons.add_a_photo,
-                    color: Colors.purple[200],   
-                  ),
                   enabledBorder: OutlineInputBorder(),
                   focusedBorder: OutlineInputBorder()
                 ),
               ),
             }]
           });
+        });
+        Future.delayed(Duration.zero, () {
+          notesController.animateTo(notesController.position.maxScrollExtent, duration: Duration(milliseconds: 300), curve: Curves.ease);
         });
       }
 
@@ -194,10 +190,6 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                 color: Colors.grey
               ),
               contentPadding: EdgeInsets.all(16.0),
-              suffixIcon: Icon(
-                Icons.add_a_photo,
-                color: Colors.purple[200],   
-              ),
               enabledBorder: OutlineInputBorder(),
               focusedBorder: OutlineInputBorder()
             ),
@@ -230,7 +222,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
           });
           DBHelper.insert("descs", {
             "id": descsId,
-            "title": titleChild.controller.text,
+            "title": titleChild.controller.text.replaceAll(",", ""),
           });
           DBHelper.insert("note_descs", {
             "id": Uuid().v4(),
@@ -260,7 +252,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
           });
           DBHelper.insert("descs", {
             "id": noteDesc["id"],
-            "title": titleChild.controller.text,
+            "title": titleChild.controller.text.replaceAll(",", "")
           });
           DBHelper.insert("note_descs", {
             "id": Uuid().v4(),
@@ -289,7 +281,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                     borderSide: BorderSide.none,
                     borderRadius: BorderRadius.circular(10.0)
                   ),
-                  title: Text('Add Item',
+                  title: Text('Add a Note',
                     style: TextStyle(
                       fontSize: 16.0
                     ),
@@ -298,6 +290,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                   width: 300.0,
                   height: 300.0,
                   child: ListView(
+                    controller: notesController,
                     children: [
                       ElevatedButton.icon(
                         onPressed: () => addItem(s), 
@@ -358,7 +351,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                               flex: 6,
                                               child: notesWidget[i]["description"][z]["title"]
                                             ),
-                                            Flexible(
+                                            z > 0 
+                                            ? Flexible(
                                               flex: 1,
                                               child: InkWell(
                                                 onTap: () => z > 0 ? removeItemDesc(s, notesWidget[i]["id"], notesWidget[i]["description"][z]["id"]) : addItemDesc(s, notesWidget[i]["id"]),
@@ -366,8 +360,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                                   z > 0 ? Icons.remove_circle : Icons.add_circle,
                                                   color: Colors.purple[200],  
                                                 ),
-                                              )
-                                            )
+                                              )) 
+                                            : Container()
                                           ],
                                         ),
                                       );          
@@ -427,10 +421,6 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                   color: Colors.grey
                 ),
                 contentPadding: EdgeInsets.all(16.0),
-                suffixIcon: Icon(
-                  Icons.add_a_photo,
-                  color: Colors.purple[200],   
-                ),
                 enabledBorder: OutlineInputBorder(),
                 focusedBorder: OutlineInputBorder()
               ),
@@ -474,7 +464,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                     borderSide: BorderSide.none,
                     borderRadius: BorderRadius.circular(10.0)
                   ),
-                  title: Text('Add Item',
+                  title: Text('Add a Note',
                     style: TextStyle(
                       fontSize: 16.0
                     ),
@@ -483,6 +473,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                   width: 300.0,
                   height: 300.0,
                   child: ListView(
+                    controller: notesController,
                     children: [
                       ElevatedButton.icon(
                         onPressed: () => addItem(s), 
@@ -543,7 +534,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                               flex: 6,
                                               child: notesWidget[i]["description"][z]["title"]
                                             ),
-                                            Flexible(
+                                            z > 0 
+                                            ? Flexible(
                                               flex: 1,
                                               child: InkWell(
                                                 onTap: () => z > 0 ? removeItemDesc(s, notesWidget[i]["id"], notesWidget[i]["description"][z]["id"]) : addItemDesc(s, notesWidget[i]["id"]),
@@ -551,8 +543,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                                   z > 0 ? Icons.remove_circle : Icons.add_circle,
                                                   color: Colors.purple[200],  
                                                 ),
-                                              )
-                                            )
+                                              )) 
+                                            : Container()
                                           ],
                                         ),
                                       );          
@@ -616,7 +608,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
           return StatefulBuilder(
             builder: (BuildContext context, Function s) {
               return Container(
-                margin: EdgeInsets.only(top: 20.0, left: 16.0, right: 16.0),
+                margin: EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
                 child: StaggeredGridView.countBuilder(
                   crossAxisCount: 4,
                   itemCount: notes.length,
@@ -641,7 +633,12 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                           children: [
                             Expanded(
                               flex: 4,
-                              child: Text(notes[i]["title"]),
+                              child: Text(notes[i]["title"],
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14.0,
+                                ),
+                              ),
                             ),
                             Expanded(
                               flex: 1,
@@ -649,6 +646,17 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                 onTap: () => editNote(notes[i]["note_id"], notes[i]["desc_id"]),
                                 child: Icon(
                                   Icons.edit,
+                                  size: 18.0,
+                                  color: Colors.blue[200],
+                                ),
+                              )
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: InkWell(
+                                onTap: () {},
+                                child: Icon(
+                                  Icons.visibility,
                                   size: 18.0,
                                   color: Colors.blue[200],
                                 ),
@@ -742,6 +750,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                       Expanded(
                         child: ListView.builder(
                           shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
                           itemCount: notes[i]["descs"].length,
                           itemBuilder: (BuildContext context, int z) {
                             return Container(
@@ -757,7 +766,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                       ),
                     ]
                   )),
-                  staggeredTileBuilder: (int index) => StaggeredTile.count(2, index.isEven ? 2 : 1),
+                  staggeredTileBuilder: (int i) => StaggeredTile.count(2, i.isEven ? 3 : 2),
                   mainAxisSpacing: 6.0,
                   crossAxisSpacing: 6.0,
                 ),
