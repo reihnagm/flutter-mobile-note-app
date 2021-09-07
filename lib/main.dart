@@ -738,7 +738,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                       barrierDismissible: true,
                       barrierLabel: '',
                       context: context,
-                      pageBuilder: (context, animation1, animation2) {}
+                      pageBuilder: (BuildContext context, Animation<double> animation1, Animation<double> animation2) {}
                     );
                   },
                   child: Icon(
@@ -820,7 +820,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                       barrierDismissible: true,
                       barrierLabel: '',
                       context: context,
-                      pageBuilder: (context, animation1, animation2) {}
+                      pageBuilder: (BuildContext context, Animation<double> animation1, Animation<double> animation2) {}
                     );
                   },
                   child: Icon(
