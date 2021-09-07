@@ -396,7 +396,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
       );
     }
 
-  void editNote(String noteId, String descId) {
+  void editNote(String noteId) {
     final notesSelected = notes.where((item) => item["note_id"] == noteId).toList();
     for (var note in notesSelected) {   
       List descAssign = [];
@@ -668,7 +668,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
               Expanded(
                 flex: 1,
                 child: InkWell(
-                  onTap: () => editNote(notes[i]["note_id"], notes[i]["desc_id"]),
+                  onTap: () => editNote(notes[i]["note_id"]),
                   child: Icon(
                     Icons.edit,
                     size: 18.0,
@@ -793,11 +793,11 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                         ),
                                         SizedBox(width: 16.0),
                                         InkWell(
-                                          onTap: () {
-                                            setState(() { });                             
+                                          onTap: () {                       
                                             DBHelper.delete("notes", notes[i]["note_id"]);
                                             DBHelper.delete("descs", notes[i]["desc_id"]);
                                             DBHelper.delete("note_descs", notes[i]["note_desc_id"]);
+                                            setState(() { });      
                                             Navigator.of(context).pop();
                                           },
                                           child: Text("Yes",
