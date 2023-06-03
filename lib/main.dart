@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
       title: 'Alba Note',
       debugShowCheckedModeBanner: false,
       home: SplashScreen(
-        seconds: 3,
+        seconds: 4,
         navigateAfterSeconds: MyHomeScreen(),
         title: Text('Alba Note ${this.version}+${this.buildNumber}',
         style: TextStyle(
@@ -42,9 +42,6 @@ class MyApp extends StatelessWidget {
           fontSize: 25.0,
           color: Colors.white
         )),
-        image: Image.asset("assets/images/notepad.png",
-          color: Colors.white,
-        ),
         useLoader: false,
         backgroundColor: Colors.purple[200],
         styleTextUnderTheLoader: TextStyle(),
@@ -64,207 +61,7 @@ class MyHomeScreen extends StatefulWidget {
 
 class _MyHomeScreenState extends State<MyHomeScreen> {
   
-  List notesWidget = [{
-    "id": Uuid().v4(),
-    "title": TextField(
-      style: TextStyle(
-        fontSize: 12.0,
-        color: Colors.black
-      ),
-      controller: TextEditingController(),
-      decoration: InputDecoration(
-        hintText: "E.g Fruits",
-        hintStyle: TextStyle(
-          fontSize: 12.0,
-          color: Colors.grey
-        ),
-        contentPadding: EdgeInsets.all(16.0),
-        enabledBorder: UnderlineInputBorder(),
-        focusedBorder: UnderlineInputBorder()
-      ),
-    ),
-    "description": [{
-      "id": Uuid().v4(),
-      "title": TextField(
-        style: TextStyle(
-          fontSize: 12.0,
-          color: Colors.black
-        ),
-        controller: TextEditingController(),
-        maxLines: 3,
-        decoration: InputDecoration(
-          hintText: "E.g Apple",
-          hintStyle: TextStyle(
-            fontSize: 12.0,
-            color: Colors.grey
-          ),
-          contentPadding: EdgeInsets.all(16.0),
-          enabledBorder: OutlineInputBorder(),
-          focusedBorder: OutlineInputBorder()
-        ),
-      ),
-    }]
-  }];
-
-  List<Map<String, dynamic>> notes = [];
-  Future<List<Map<String, dynamic>>> fetchAndSetNotes() async {       
-    notes = [];
-    final dataList = await DBHelper.getData();
-    for (var item in dataList) {
-      notes.add({
-        "note_id": item["note_id"],
-        "desc_id": item["desc_id"],
-        "note_desc_id": item["note_desc_id"],
-        "date": item["date"],
-        "title": item["parentTitle"],
-        "descs": item["childTitle"]
-      });
-    }
-    return notes;
-  }
-
-  ScrollController notesController = ScrollController();
-  void addItem(Function setState) {
-    setState(() {
-      notesWidget.add({
-        "id": Uuid().v4(),
-        "title": TextField(
-          style: TextStyle(
-            fontSize: 12.0,
-            color: Colors.black
-          ),
-          controller: TextEditingController(),
-          decoration: InputDecoration(
-            hintText: "E.g Fruits",
-            hintStyle: TextStyle(
-              fontSize: 12.0,
-              color: Colors.grey
-            ),
-            contentPadding: EdgeInsets.all(16.0),
-            enabledBorder: UnderlineInputBorder(),
-            focusedBorder: UnderlineInputBorder()
-          ),
-        ),
-        "description": [{
-          "id": Uuid().v4(),
-          "title": TextField(
-            style: TextStyle(
-              fontSize: 12.0,
-              color: Colors.black
-            ),
-            controller: TextEditingController(),
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: "E.g Apple",
-              hintStyle: TextStyle(
-                fontSize: 12.0,
-                color: Colors.grey
-              ),
-              contentPadding: EdgeInsets.all(16.0),
-              enabledBorder: OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder()
-            ),
-          ),
-        }]
-      });
-    });
-    Future.delayed(Duration.zero, () {
-      notesController.animateTo(notesController.position.maxScrollExtent, duration: Duration(milliseconds: 300), curve: Curves.ease);
-    });
-  }
-
-  void removeItem(Function setState, String id) {
-    setState(() {
-      notesWidget.removeWhere((item) => item["id"] == id);
-    });
-  }
-
-  void addItemDesc(Function setState, String id) {
-    setState(() {
-      int index = notesWidget.indexWhere((item) => item["id"] == id);
-      notesWidget[index]["description"].add({
-        "id": Uuid().v4(),
-        "title": TextField(
-          style: TextStyle(
-            fontSize: 12.0,
-            color: Colors.black
-          ),
-          controller: TextEditingController(),
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: "E.g Apple",
-            hintStyle: TextStyle(
-              fontSize: 12.0,
-              color: Colors.grey
-            ),
-            contentPadding: EdgeInsets.all(16.0),
-            enabledBorder: OutlineInputBorder(),
-            focusedBorder: OutlineInputBorder()
-          ),
-        ),
-      });
-    });
-  }
-
-  void removeItemDesc(Function setState, String idParent, String idChild) {
-    setState(() {
-      int indexParent = notesWidget.indexWhere((item) => item["id"] == idParent);
-      int indexChild = notesWidget[indexParent]["description"].indexWhere((item) => item["id"] == idChild);
-      notesWidget[indexParent]["description"].removeAt(indexChild);
-    });
-  }
-
-  void submitNote() {
-    for (var note in notesWidget) {
-      String notesId = Uuid().v4();
-      TextField titleParent = note["title"];
-      for (var noteDesc in note["description"]) {
-        String descsId = Uuid().v4();
-        TextField titleChild = noteDesc["title"];
-        DBHelper.insert("notes", {
-          "id": notesId,
-          "title": titleParent.controller.text,
-          "date": DateTime.now().toString()
-        });
-        DBHelper.insert("descs", {
-          "id": descsId,
-          "title": titleChild.controller.text
-        });
-        DBHelper.insert("note_descs", {
-          "id": Uuid().v4(),
-          "note_id": notesId,
-          "desc_id": descsId
-        });
-      }
-    }
-    Navigator.of(context).pop();
-    setState(() {});
-  }
-
-  void updateNote() {
-    for (var note in notesWidget) {
-      TextField titleParent = note["title"];
-      for (var noteDesc in note["description"]) {
-        TextField titleChild = noteDesc["title"];
-        DBHelper.insert("notes", {
-          "id": note["id"],
-          "title": titleParent.controller.text,
-          "date": DateTime.now().toString()
-        });
-        DBHelper.insert("descs", {
-          "id": noteDesc["id"],
-          "title": titleChild.controller.text
-        });
-        DBHelper.insert("note_descs", {
-          "id": Uuid().v4(),
-          "note_id": note["id"],
-          "desc_id": noteDesc["id"]
-        });
-      }
-    }
-    Navigator.of(context).pop();
-    setState(() {});
-  }
+  List notesWidget = [];
 
   void addNotes() {
     notesWidget = [{
@@ -393,17 +190,6 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                             flex: 6,
                                             child: notesWidget[i]["description"][z]["title"]
                                           ),
-                                          z > 0 
-                                          ? Flexible(
-                                            flex: 1,
-                                            child: InkWell(
-                                              onTap: () => z > 0 ? removeItemDesc(s, notesWidget[i]["id"], notesWidget[i]["description"][z]["id"]) : addItemDesc(s, notesWidget[i]["id"]),
-                                              child: Icon(
-                                                z > 0 ? Icons.remove_circle : Icons.add_circle,
-                                                color: Colors.purple[200],  
-                                              ),
-                                            )) 
-                                          : Container()
                                         ],
                                       ),
                                     );          
@@ -420,7 +206,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                         primary: Colors.purple[200],
                         elevation: 2.0
                       ),
-                      onPressed: submitNote,
+                      onPressed: submit,
                       child: Text("Save",
                         style: TextStyle(
                           fontSize: 14.0
@@ -572,17 +358,6 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                             flex: 6,
                                             child: notesWidget[i]["description"][z]["title"]
                                           ),
-                                          z > 0 
-                                          ? Flexible(
-                                            flex: 1,
-                                            child: InkWell(
-                                              onTap: () => z > 0 ? removeItemDesc(s, notesWidget[i]["id"], notesWidget[i]["description"][z]["id"]) : addItemDesc(s, notesWidget[i]["id"]),
-                                              child: Icon(
-                                                z > 0 ? Icons.remove_circle : Icons.add_circle,
-                                                color: Colors.purple[200],  
-                                              ),
-                                            )) 
-                                          : Container()
                                         ],
                                       ),
                                     );          
@@ -599,7 +374,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                         primary: Colors.purple[200],
                         elevation: 2.0
                       ),
-                      onPressed: updateNote,
+                      onPressed: update,
                       child: Text("Save",
                         style: TextStyle(
                           fontSize: 14.0
@@ -621,14 +396,138 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
     );
   }
 
+
+  ScrollController notesController = ScrollController();
+  void addItem(Function setState) {
+    setState(() {
+      notesWidget.add({
+        "id": Uuid().v4(),
+        "title": TextField(
+          style: TextStyle(
+            fontSize: 12.0,
+            color: Colors.black
+          ),
+          controller: TextEditingController(),
+          decoration: InputDecoration(
+            hintText: "E.g Fruits",
+            hintStyle: TextStyle(
+              fontSize: 12.0,
+              color: Colors.grey
+            ),
+            contentPadding: EdgeInsets.all(16.0),
+            enabledBorder: UnderlineInputBorder(),
+            focusedBorder: UnderlineInputBorder()
+          ),
+        ),
+        "description": [{
+          "id": Uuid().v4(),
+          "title": TextField(
+            style: TextStyle(
+              fontSize: 12.0,
+              color: Colors.black
+            ),
+            controller: TextEditingController(),
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: "E.g Apple",
+              hintStyle: TextStyle(
+                fontSize: 12.0,
+                color: Colors.grey
+              ),
+              contentPadding: EdgeInsets.all(16.0),
+              enabledBorder: OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder()
+            ),
+          ),
+        }]
+      });
+    });
+    Future.delayed(Duration.zero, () {
+      notesController.animateTo(notesController.position.maxScrollExtent, duration: Duration(milliseconds: 300), curve: Curves.ease);
+    });
+  }
+
+  List<Map<String, dynamic>> notes = [];
+  Future<List<Map<String, dynamic>>> fetchAndSetNotes() async {       
+    notes = [];
+    final dataList = await DBHelper.getData();
+    for (var item in dataList) {
+      notes.add({
+        "note_id": item["note_id"],
+        "desc_id": item["desc_id"],
+        "note_desc_id": item["note_desc_id"],
+        "date": item["date"],
+        "title": item["parentTitle"],
+        "descs": item["childTitle"]
+      });
+    }
+    return notes;
+  }
+
+  void removeItem(Function setState, String id) {
+    setState(() {
+      notesWidget.removeWhere((item) => item["id"] == id);
+    });
+  }
+
+  void submit() {
+    for (var note in notesWidget) {
+      String notesId = Uuid().v4();
+      TextField titleParent = note["title"];
+      for (var noteDesc in note["description"]) {
+        String descsId = Uuid().v4();
+        TextField titleChild = noteDesc["title"];
+        DBHelper.insert("notes", {
+          "id": notesId,
+          "title": titleParent.controller.text,
+          "date": DateTime.now().toString()
+        });
+        DBHelper.insert("descs", {
+          "id": descsId,
+          "title": titleChild.controller.text
+        });
+        DBHelper.insert("note_descs", {
+          "id": Uuid().v4(),
+          "note_id": notesId,
+          "desc_id": descsId
+        });
+      }
+    }
+    Navigator.of(context).pop();
+    setState(() {});
+  }
+
+  void update() {
+    for (var note in notesWidget) {
+      TextField titleParent = note["title"];
+      for (var noteDesc in note["description"]) {
+        TextField titleChild = noteDesc["title"];
+        DBHelper.insert("notes", {
+          "id": note["id"],
+          "title": titleParent.controller.text,
+          "date": DateTime.now().toString()
+        });
+        DBHelper.insert("descs", {
+          "id": noteDesc["id"],
+          "title": titleChild.controller.text
+        });
+        DBHelper.insert("note_descs", {
+          "id": Uuid().v4(),
+          "note_id": note["id"],
+          "desc_id": noteDesc["id"]
+        });
+      }
+    }
+    Navigator.of(context).pop();
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
       appBar: AppBar(
         elevation: 2.0,
-        centerTitle: true,
-        title: Text("Alba Note"),
         backgroundColor: Colors.purple[200],
       ),
       body: SafeArea(
